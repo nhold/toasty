@@ -16,10 +16,22 @@ void CheckGlError()
 		printf("Error: %d\n", i);
 }
 
+/*static const GLfloat g_vertex_buffer_data[] = {
+   -0.5f, 0.5f, 0.0f,
+   0.0f, 0.5f, 0.0f,
+   -0.5f,  0.0f, 0.0f,
+   0.0f,  0.0f, 0.0f
+};*/
+
 static const GLfloat g_vertex_buffer_data[] = {
-   -0.5f, -0.5f, 0.0f,
-   0.5f, -0.5f, 0.0f,
-   0.0f,  0.5f, 0.0f,
+	// Pos      // Tex
+	0.0f, 1.0f, 0.0f, 1.0f,
+	1.0f, 0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 0.0f,
+
+	0.0f, 1.0f, 0.0f, 1.0f,
+	1.0f, 1.0f, 1.0f, 1.0f,
+	1.0f, 0.0f, 1.0f, 0.0f
 };
 
 bool LoadPNGFromFile(const std::string& filename, std::vector<uint8_t>& pixels, Vector2ui& size)
@@ -67,7 +79,7 @@ int main()
 	GLuint vertexbuffer;
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 9, g_vertex_buffer_data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, g_vertex_buffer_data, GL_STATIC_DRAW);
 
 	Program simpleProgram;
 	simpleProgram.Load("assets/SimpleVertexShader.vertexshader", "assets/SimpleFragmentShader.fragmentshader");
@@ -76,7 +88,7 @@ int main()
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, 800, 800);
 	glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
 
 	while (window.IsOpen())
@@ -96,7 +108,7 @@ int main()
 		);
 		
 		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
+		glDrawArrays(GL_TRIANGLES, 0, 4); // Starting from vertex 0; 3 vertices total -> 1 triangle
 		glDisableVertexAttribArray(0);
 
 

@@ -9,7 +9,6 @@
 typedef std::wstring WString;
 typedef std::string String;
 
-
 inline std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
 inline WString Widen(String from)
