@@ -91,6 +91,15 @@ Matrix4& Matrix4::CreateOrthographic(float width, float height)
 		0.f, 0.f, 1.f);
 }
 
+Matrix4& Matrix4::Scale(float scaleX, float scaleY)
+{
+	Matrix4 scaling(scaleX, 0, (1 - scaleX),
+		0, scaleY, (1 - scaleY),
+		0, 0, 1);
+
+	return Combine(scaling);
+}
+
 Matrix4 operator*(const Matrix4& left, const Matrix4& right)
 {
 	return Matrix4(left).Combine(right);

@@ -24,6 +24,7 @@ class Matrix4
 		Matrix4& Combine(const Matrix4& transform);
 		Matrix4& Translate(float x, float y);
 		Matrix4& Translate(const Vector2f& offset);
+		Matrix4& Scale(float scaleX, float scaleY);
 
 		static Matrix4& CreateOrthographic(float width, float height);
     private:

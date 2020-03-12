@@ -91,6 +91,12 @@ void Program::Bind()
 	glUseProgram(programId);
 }
 
+void Program::SetMatrix4Uniform(String name, Matrix4 matrix)
+{
+	GLuint uniformLocation = glGetUniformLocation(programId, name.c_str());
+	glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, matrix.GetMatrixData());
+}
+
 String Program::GetFileAsText(const char* filename)
 {
 	std::ifstream in(filename, std::ios::in);

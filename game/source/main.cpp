@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <Program.hpp>
+#include <Matrix4.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG // Custom usage. Only png support.
 #include <stb_image.h>
@@ -16,101 +17,170 @@ void CheckGlError()
 		printf("Error: %d\n", i);
 }
 
-/*static const GLfloat g_vertex_buffer_data[] = {
-   -0.5f, 0.5f, 0.0f,
-   0.0f, 0.5f, 0.0f,
-   -0.5f,  0.0f, 0.0f,
-   0.0f,  0.0f, 0.0f
-};*/
+class Image
+{
+public:
+	Image(const std::string& filename)
+	{
+		Load(filename);
+	}
 
-static const GLfloat g_vertex_buffer_data[] = {
-	// Pos      // Tex
-	0.0f, 1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 1.0f, 0.0f,
-	0.0f, 0.0f, 0.0f, 0.0f,
+	Image()
+	{
+	}
 
-	0.0f, 1.0f, 0.0f, 1.0f,
-	1.0f, 1.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 1.0f, 0.0f
+	bool Load(const std::string& filename)
+	{
+		int width = 0;
+		int height = 0;
+
+		unsigned char* ptr = stbi_load(filename.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+
+		if (ptr)
+		{
+			size.x = width;
+			size.y = height;
+			if (width && height)
+			{
+				pixels = new unsigned char[width * height * 4];
+				memcpy(&pixels[0], ptr, width * height * 4);
+			}
+
+			stbi_image_free(ptr);
+
+			return true;
+		}
+		else
+		{
+			printf("Failed to load image %s. Reason: %s", filename.c_str(), stbi_failure_reason());
+			return false;
+		}
+	}
+
+	int GetWidth()
+	{
+		return size.x;
+	}
+
+	int GetHeight()
+	{
+		return size.y;
+	}
+
+	unsigned char* GetData()
+	{
+		return pixels;
+	}
+
+private:
+	unsigned char* pixels;
+	Vector2ui size;
+	int channels;
 };
 
-bool LoadPNGFromFile(const std::string& filename, std::vector<uint8_t>& pixels, Vector2ui& size)
+
+class Texture2D
 {
-	// Clear the array (just in case)
-	pixels.clear();
-
-	// Load the image and get a pointer to the pixels in memory
-	int width = 0;
-	int height = 0;
-	int channels = 0;
-	unsigned char* ptr = stbi_load(filename.c_str(), &width, &height, &channels, STBI_rgb_alpha);
-
-	if (ptr)
+public:
+	Texture2D(Image& const aImage) : image(aImage)
 	{
-		// Assign the image properties
-		size.x = width;
-		size.y = height;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
 
-		if (width && height)
-		{
-			// Copy the loaded pixels to the pixel buffer
-			pixels.resize(width * height * 4);
-			memcpy(&pixels[0], ptr, pixels.size());
-		}
 
-		// Free the loaded pixels (they are now in our own pixel buffer)
-		stbi_image_free(ptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-		return true;
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.GetWidth(), image.GetHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, image.GetData());
+		glGenerateMipmap(GL_TEXTURE_2D);
 	}
-	else
+
+	void Bind()
 	{
-		// Error, failed to load the image
-		printf("Failed to load image %s. Reason: %s", filename.c_str(), stbi_failure_reason());
-
-		return false;
+		glBindTexture(GL_TEXTURE_2D, texture);
 	}
-}
+
+	unsigned int texture;
+	Image& const image;
+
+};
+class SpriteRenderer
+{
+public:
+
+	GLuint quadVAO = 0;
+	Program program;
+	Matrix4 orthoView;
+
+	SpriteRenderer()
+	{
+		GLuint VBO;
+		
+		GLfloat vertices[] = {
+			// Pos      // Tex
+			0.0f, 1.0f, 0.0f, 1.0f,
+			1.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f,
+
+			0.0f, 1.0f, 0.0f, 1.0f,
+			1.0f, 1.0f, 1.0f, 1.0f,
+			1.0f, 0.0f, 1.0f, 0.0f
+		};
+
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &VBO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+		glBindVertexArray(quadVAO);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		program.Load("assets/SimpleVertexShader.vertexshader", "assets/SimpleFragmentShader.fragmentshader");
+		orthoView.CreateOrthographic(800, 600);
+		program.SetMatrix4Uniform("projection", orthoView);
+	}
+
+	void DrawSprite(Texture2D& texture, Vector2f position, Vector2f size, GLfloat rotation)
+	{
+		program.Bind();
+
+		/*Matrix4 model;
+		model = model.Translate(position);
+		model = model.Scale(size.x, size.y);
+
+		program.SetMatrix4Uniform("model", model);*/
+
+		/*glActiveTexture(GL_TEXTURE0);
+		texture.Bind();*/
+		glBindVertexArray(quadVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+};
+
 int main()
 {
 	Window window;
-	window.Create(800, 600, "The ultimate test");
-
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, g_vertex_buffer_data, GL_STATIC_DRAW);
-
-	Program simpleProgram;
-	simpleProgram.Load("assets/SimpleVertexShader.vertexshader", "assets/SimpleFragmentShader.fragmentshader");
+	window.Create(800, 600, "Toasty :)");
 	
-	GLuint vao = 0;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
 	glViewport(0, 0, 800, 800);
 	glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
 
+	SpriteRenderer renderer;
+	Image image("assets/projectile3.png");
+	Texture2D tex(image);
+	
 	while (window.IsOpen())
 	{	
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		simpleProgram.Bind();
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(
-			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
-		
-		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, 4); // Starting from vertex 0; 3 vertices total -> 1 triangle
-		glDisableVertexAttribArray(0);
-
+		renderer.DrawSprite(tex, Vector2f(10, 10), Vector2f(16, 16), 0);
 
 		window.Display();
 	}
