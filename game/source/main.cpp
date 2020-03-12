@@ -93,7 +93,7 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.GetWidth(), image.GetHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, image.GetData());
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.GetWidth(), image.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image.GetData());
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
@@ -120,15 +120,18 @@ public:
 		
 		GLfloat vertices[] = {
 			// Pos      // Tex
-			0.0f, 1.0f, 0.0f, 1.0f,
-			1.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, -0.5f, 0.0f, 1.0f,
+			0.5f, 0.0f, 1.0f, 0.0f,
 			0.0f, 0.0f, 0.0f, 0.0f,
 
-			0.0f, 1.0f, 0.0f, 1.0f,
-			1.0f, 1.0f, 1.0f, 1.0f,
-			1.0f, 0.0f, 1.0f, 0.0f
+			0.0f, -0.5f, 0.0f, 1.0f,
+			0.5f, -0.5f, 1.0f, 1.0f,
+			0.5f, -0.0f, 1.0f, 0.0f
 		};
 
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glGenVertexArrays(1, &quadVAO);
 		glGenBuffers(1, &VBO);
 
@@ -142,8 +145,8 @@ public:
 		glBindVertexArray(0);
 
 		program.Load("assets/SimpleVertexShader.vertexshader", "assets/SimpleFragmentShader.fragmentshader");
-		orthoView.CreateOrthographic(800, 600);
-		program.SetMatrix4Uniform("projection", orthoView);
+		//orthoView.CreateOrthographic(800, 600);
+		//program.SetMatrix4Uniform("projection", orthoView);
 	}
 
 	void DrawSprite(Texture2D& texture, Vector2f position, Vector2f size, GLfloat rotation)
@@ -156,8 +159,8 @@ public:
 
 		program.SetMatrix4Uniform("model", model);*/
 
-		/*glActiveTexture(GL_TEXTURE0);
-		texture.Bind();*/
+		glActiveTexture(GL_TEXTURE0);
+		texture.Bind();
 		glBindVertexArray(quadVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
@@ -173,7 +176,7 @@ int main()
 	glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
 
 	SpriteRenderer renderer;
-	Image image("assets/projectile3.png");
+	Image image("assets/enemy1.png");
 	Texture2D tex(image);
 	
 	while (window.IsOpen())
