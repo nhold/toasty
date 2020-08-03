@@ -83,12 +83,26 @@ Matrix4& Matrix4::Translate(const Vector2f& offset)
 
 Matrix4& Matrix4::CreateOrthographic(float width, float height)
 {
-	float a = 2.f / width;
-	float b = 2.f / height;
+	float aaa = 2.f / width;
+	float bbb = 2.f / height;
+	float far = 5.0f;
+	float near = 0.0f;
+	float nfa = -2.f / (far - near);
+	float nfb = -(far + near / (far - near));
 
-	return Matrix4(a, a, a,
-		b, b, b,
-		0.f, 0.f, 1.f);
+	float rlweird = -((width + 0) / (width - 0));
+	float tbweird = -((0 + height) / (0 - height));
+
+	Matrix4 matrix;
+
+	matrix.matrixData[0] = aaa;	matrix.matrixData[4] = 0.f; matrix.matrixData[8] = 0.f; matrix.matrixData[12] = rlweird;
+	matrix.matrixData[1] = 0.f; matrix.matrixData[5] = bbb; matrix.matrixData[9] = 0.f; matrix.matrixData[13] = tbweird;
+	matrix.matrixData[2] = 0.f; matrix.matrixData[6] = 0.f; matrix.matrixData[10] = nfa; matrix.matrixData[14] = nfb;
+	matrix.matrixData[3] = 0.f; matrix.matrixData[7] = 0.f; matrix.matrixData[11] = 0.f; matrix.matrixData[15] = 1.f;
+
+
+
+	return matrix;
 }
 
 Matrix4& Matrix4::Scale(float scaleX, float scaleY)

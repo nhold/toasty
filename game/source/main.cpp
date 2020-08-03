@@ -129,6 +129,27 @@ public:
 			0.5f, -0.0f, 1.0f, 0.0f
 		};
 
+		/*GLfloat vertices[] = {
+			// Pos      // Tex
+			0.0f, 16.0f, 0.0f, 1.0f,
+			16.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f,
+
+			0.0f, 16.0f, 0.0f, 1.0f,
+			16.0f, 16.0f, 1.0f, 1.0f,
+			16.0f, 0.0f, 1.0f, 0.0f
+		};*/
+
+		/*GLfloat vertices[] = {
+			// Pos      // Tex
+			0.0f, 1.0f, 0.0f, 1.0f,
+			1.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 0.0f,
+
+			0.0f, 1.0f, 0.0f, 1.0f,
+			1.0f, 1.0f, 1.0f, 1.0f,
+			1.0f, 0.0f, 1.0f, 0.0f
+		};*/
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -145,19 +166,21 @@ public:
 		glBindVertexArray(0);
 
 		program.Load("assets/SimpleVertexShader.vertexshader", "assets/SimpleFragmentShader.fragmentshader");
-		//orthoView.CreateOrthographic(800, 600);
-		//program.SetMatrix4Uniform("projection", orthoView);
+		orthoView = orthoView.CreateOrthographic(800, 600);
+		program.SetMatrix4Uniform("projection", orthoView);
 	}
 
 	void DrawSprite(Texture2D& texture, Vector2f position, Vector2f size, GLfloat rotation)
 	{
 		program.Bind();
 
-		/*Matrix4 model;
-		model = model.Translate(position);
-		model = model.Scale(size.x, size.y);
+		Matrix4 model;
+		//model.matrixData[12] = 0.5f;
+		//model.matrixData[13] = 0.5f;
+		//model = model.Translate(position);
+		//model = model.Scale(size.x, size.y);
 
-		program.SetMatrix4Uniform("model", model);*/
+		program.SetMatrix4Uniform("model", model);
 
 		glActiveTexture(GL_TEXTURE0);
 		texture.Bind();
@@ -183,7 +206,7 @@ int main()
 	{	
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		renderer.DrawSprite(tex, Vector2f(10, 10), Vector2f(16, 16), 0);
+		renderer.DrawSprite(tex, Vector2f(0, 0), Vector2f(16, 16), 0);
 
 		window.Display();
 	}
